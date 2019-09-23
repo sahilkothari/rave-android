@@ -204,7 +204,7 @@ public class BankTransferPresenterTest {
     }
 
     @Test
-    public void startPaymentVerification_requeryTxCalled() throws NoSuchFieldException {
+    public void startPaymentVerification_requeryTxCalledWithCorrectParams() throws NoSuchFieldException {
 
         //Arrange
         String txRef = generateRandomString();
