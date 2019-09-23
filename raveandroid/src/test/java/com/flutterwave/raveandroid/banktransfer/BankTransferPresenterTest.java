@@ -6,12 +6,15 @@ import android.support.design.widget.TextInputLayout;
 
 import com.flutterwave.raveandroid.DeviceIdGetter;
 import com.flutterwave.raveandroid.FeeCheckRequestBody;
+import com.flutterwave.raveandroid.GetEncryptedData;
 import com.flutterwave.raveandroid.Meta;
 import com.flutterwave.raveandroid.Payload;
 import com.flutterwave.raveandroid.PayloadBuilder;
+import com.flutterwave.raveandroid.PayloadToJson;
 import com.flutterwave.raveandroid.RaveConstants;
 import com.flutterwave.raveandroid.RavePayInitializer;
 import com.flutterwave.raveandroid.ViewObject;
+import com.flutterwave.raveandroid.WhiteBox;
 import com.flutterwave.raveandroid.card.ChargeRequestBody;
 import com.flutterwave.raveandroid.data.Callbacks;
 import com.flutterwave.raveandroid.data.NetworkRequestImpl;
@@ -46,6 +49,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,6 +67,10 @@ public class BankTransferPresenterTest {
     RavePayInitializer ravePayInitializer;
     @Inject
     DeviceIdGetter deviceIdGetter;
+    @Inject
+    GetEncryptedData getEncryptedData;
+    @Inject
+    PayloadToJson payloadToJson;
     @Inject
     NetworkRequestImpl networkRequest;
     @Inject
@@ -89,7 +98,7 @@ public class BankTransferPresenterTest {
     }
 
     @Test
-    public void fetchFee_onError_showFetchFeeFailedCalled_errorOccuredMessage() {
+    public void fetchFee_onError_showFetchFeeFailedCalled_errorOccurredMessage() {
 
         bankTransferPresenter.fetchFee(generatePayload());
 
@@ -115,7 +124,7 @@ public class BankTransferPresenterTest {
 
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = Exception.class)
     public void fetchFee_onSuccess_nullException_showFetchFeeFailedCalled() {
 
         bankTransferPresenter.fetchFee(generatePayload());
@@ -123,28 +132,47 @@ public class BankTransferPresenterTest {
         ArgumentCaptor<Callbacks.OnGetFeeRequestComplete> captor = ArgumentCaptor.forClass(Callbacks.OnGetFeeRequestComplete.class);
         verify(networkRequest).getFee(any(FeeCheckRequestBody.class), captor.capture());
         captor.getAllValues().get(0).onSuccess(new FeeCheckResponse());
-        assert (throwException());
+
+        doThrow(new Exception())
+                .when(view)
+                .displayFee(any(String.class), any(Payload.class));
+
         verify(view).showFetchFeeFailed("An error occurred while retrieving transaction fee");
 
     }
 
     @Test
     public void payWithBankTransfer_chargeCard_onSuccess_onTransferDetailsReceivedCalled() {
+
+        ChargeResponse chargeResponse = generateValidChargeResponse();
+
+        when(payloadToJson.convertChargeRequestPayloadToJson(any(Payload.class))).thenReturn(generateRandomString());
+        when(getEncryptedData.getEncryptedData(any(String.class), any(String.class)))
+                .thenReturn(generateRandomString());
+
         bankTransferPresenter.payWithBankTransfer(generatePayload(), generateRandomString());
         ArgumentCaptor<Callbacks.OnChargeRequestComplete> captor = ArgumentCaptor.forClass(Callbacks.OnChargeRequestComplete.class);
 
-        ChargeResponse chargeResponse = generateValidChargeResponse();
 
         verify(networkRequest).chargeCard(any(ChargeRequestBody.class), captor.capture());
         captor.getAllValues().get(0).onSuccess(chargeResponse, any(String.class));
 
         verify(view).showProgressIndicator(false);
-        verify(view).onTransferDetailsReceived(chargeResponse.getData().getAmount(), chargeResponse.getData().getAccountnumber(), chargeResponse.getData().getBankname(), chargeResponse.getData().getNote().substring(
+        verify(view).onTransferDetailsReceived(
+                chargeResponse.getData().getAmount()
+                , chargeResponse.getData().getAccountnumber(),
+                chargeResponse.getData().getBankname(),
+                chargeResponse.getData().getNote().substring(
                 chargeResponse.getData().getNote().indexOf("to ") + 3));
     }
 
     @Test
     public void payWithBankTransfer_chargeCard_onSuccess_nullResponse_onTransferDetailsReceivedCalled() {
+
+        when(payloadToJson.convertChargeRequestPayloadToJson(any(Payload.class))).thenReturn(generateRandomString());
+        when(getEncryptedData.getEncryptedData(any(String.class), any(String.class)))
+                .thenReturn(generateRandomString());
+
         bankTransferPresenter.payWithBankTransfer(generatePayload(), generateRandomString());
         ArgumentCaptor<Callbacks.OnChargeRequestComplete> captor = ArgumentCaptor.forClass(Callbacks.OnChargeRequestComplete.class);
 
@@ -157,36 +185,58 @@ public class BankTransferPresenterTest {
     }
 
     @Test
-    public void payWithBankTransfer_chargeCard_onError_onPaymentErrorCalled() {
+    public void payWithBankTransfer_chargeCard_onError_onPaymentErrorCalledWithCorrectParams() {
+
+        when(payloadToJson.convertChargeRequestPayloadToJson(any(Payload.class))).thenReturn(generateRandomString());
+        when(getEncryptedData.getEncryptedData(any(String.class), any(String.class)))
+                .thenReturn(generateRandomString());
+        String message = generateRandomString();
+        String jsonResponse = generateRandomString();
+
         bankTransferPresenter.payWithBankTransfer(generatePayload(), generateRandomString());
         ArgumentCaptor<Callbacks.OnChargeRequestComplete> captor = ArgumentCaptor.forClass(Callbacks.OnChargeRequestComplete.class);
 
-        String message = generateRandomString();
-
         verify(networkRequest).chargeCard(any(ChargeRequestBody.class), captor.capture());
-        captor.getAllValues().get(0).onError(message, generateRandomString());
+        captor.getAllValues().get(0).onError(message, jsonResponse);
 
         verify(view).showProgressIndicator(false);
         verify(view).onPaymentError(message);
     }
 
     @Test
-    public void startPaymentVerification_requeryTxCalled() {
-        bankTransferPresenter.startPaymentVerification();
-        long time = System.currentTimeMillis();
+    public void startPaymentVerification_requeryTxCalled() throws NoSuchFieldException {
 
-        String randomString = generateRandomString();
+        //Arrange
+        String txRef = generateRandomString();
+        String flwRef = generateRandomString();
+        String publicKey = generateRandomString();
+        boolean pollingCancelled = generateRandomBoolean();
+
+        WhiteBox.setInternalState(bankTransferPresenterMock, "flwRef", flwRef);
+        WhiteBox.setInternalState(bankTransferPresenterMock, "txRef", txRef);
+        WhiteBox.setInternalState(bankTransferPresenterMock, "publicKey", publicKey);
+        WhiteBox.setInternalState(bankTransferPresenterMock, "pollingCancelled", pollingCancelled);
+        WhiteBox.setInternalState(bankTransferPresenterMock, "mView", view);
+
+        doCallRealMethod().when(bankTransferPresenterMock).startPaymentVerification();
+        bankTransferPresenterMock.startPaymentVerification();
+
+        long requeryCountdownTime = (long) WhiteBox.getInternalState(bankTransferPresenterMock, "requeryCountdownTime");
+
         verify(view).showPollingIndicator(true);
 
-        bankTransferPresenterMock.requeryTx(randomString, randomString, randomString, true, time);
-        verify(bankTransferPresenterMock).requeryTx(randomString, randomString, randomString, true, time);
+        verify(bankTransferPresenterMock)
+                .requeryTx(flwRef, txRef,
+                        publicKey, true, requeryCountdownTime);
     }
 
     @Test
     public void cancelPolling_pollingCancelledTrue() {
         bankTransferPresenter.cancelPolling();
 
-        assertTrue(bankTransferPresenter.pollingCancelled);
+        boolean pollingCancelled = (boolean) WhiteBox.getInternalState(bankTransferPresenter, "pollingCancelled");
+
+        assertTrue(pollingCancelled);
     }
 
     @Test
@@ -443,6 +493,9 @@ public class BankTransferPresenterTest {
         assertNotNull(bundle);
     }
 
+    private Boolean generateRandomBoolean() {
+        return new Random().nextBoolean();
+    }
     private Double generateRandomDouble() {
         return new Random().nextDouble();
     }
