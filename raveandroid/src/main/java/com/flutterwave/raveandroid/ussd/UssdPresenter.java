@@ -22,7 +22,6 @@ import com.flutterwave.raveandroid.data.events.ChargeAttemptEvent;
 import com.flutterwave.raveandroid.data.events.Event;
 import com.flutterwave.raveandroid.data.events.RequeryEvent;
 import com.flutterwave.raveandroid.data.events.ScreenLaunchEvent;
-import com.flutterwave.raveandroid.di.components.AppComponent;
 import com.flutterwave.raveandroid.responses.ChargeResponse;
 import com.flutterwave.raveandroid.responses.FeeCheckResponse;
 import com.flutterwave.raveandroid.responses.RequeryResponse;
@@ -59,17 +58,6 @@ public class UssdPresenter implements UssdContract.UserActionsListener {
     UssdPresenter(Context context, UssdContract.View mView) {
         this.context = context;
         this.mView = mView;
-    }
-
-    public UssdPresenter(Context context, UssdContract.View mView, AppComponent appComponent){
-        this.context = context;
-        this.mView = mView;
-        this.eventLogger = appComponent.eventLogger();
-        this.amountValidator = appComponent.amountValidator();
-        this.networkRequest = appComponent.networkImpl();
-        this.deviceIdGetter = appComponent.deviceIdGetter();
-        this.payloadEncryptor = appComponent.payloadEncryptor();
-        this.payloadToJson = appComponent.payloadToJson();
     }
 
     @Override

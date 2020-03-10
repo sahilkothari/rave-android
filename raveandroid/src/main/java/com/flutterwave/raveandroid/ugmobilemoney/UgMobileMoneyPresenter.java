@@ -21,7 +21,6 @@ import com.flutterwave.raveandroid.data.events.ChargeAttemptEvent;
 import com.flutterwave.raveandroid.data.events.Event;
 import com.flutterwave.raveandroid.data.events.RequeryEvent;
 import com.flutterwave.raveandroid.data.events.ScreenLaunchEvent;
-import com.flutterwave.raveandroid.di.components.AppComponent;
 import com.flutterwave.raveandroid.responses.FeeCheckResponse;
 import com.flutterwave.raveandroid.responses.MobileMoneyChargeResponse;
 import com.flutterwave.raveandroid.responses.RequeryResponse;
@@ -69,17 +68,6 @@ public class UgMobileMoneyPresenter implements UgMobileMoneyContract.UserActions
     public UgMobileMoneyPresenter(Context context, UgMobileMoneyContract.View mView) {
         this.context = context;
         this.mView = mView;
-    }
-
-    public UgMobileMoneyPresenter(Context context, UgMobileMoneyContract.View mView, AppComponent appComponent){
-        this.context = context;
-        this.mView = mView;
-        this.eventLogger = appComponent.eventLogger();
-        this.amountValidator = appComponent.amountValidator();
-        this.networkRequest = appComponent.networkImpl();
-        this.deviceIdGetter = appComponent.deviceIdGetter();
-        this.payloadEncryptor = appComponent.payloadEncryptor();
-        this.phoneValidator = appComponent.phoneValidator();
     }
 
     @Override

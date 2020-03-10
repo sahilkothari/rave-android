@@ -63,7 +63,6 @@ public class RaveConstants {
     public static String invalidBvnMessage = "Enter a valid BVN";
     public static String invalidBankCodeMessage = "You need to select bank";
     public static String defaultAccounNumber = "0000000000";
-    public static String inValidRedirectUrl = "Invalid redirect url returned";
 
     public static String response = "response";
     public static String mtn = "mtn";
@@ -126,7 +125,6 @@ public class RaveConstants {
     public static final int PAYMENT_TYPE_USSD = 111;
     public static final int PAYMENT_TYPE_FRANCO_MOBILE_MONEY = 112;
     public static final int PAYMENT_TYPE_BARTER = 113;
-    public static final int PAYMENT_TYPE_SA_BANK_ACCOUNT = 114;
 
     public static HashMap<Integer, String> paymentTypesNamesList = new HashMap<Integer, String>() {{
         put(PAYMENT_TYPE_CARD, "Card");
@@ -142,7 +140,6 @@ public class RaveConstants {
         put(PAYMENT_TYPE_UK, "UK Bank Account");
         put(PAYMENT_TYPE_BARTER, "Barter");
         put(PAYMENT_TYPE_USSD, "USSD");
-        put(PAYMENT_TYPE_SA_BANK_ACCOUNT, "South Africa Bank Account");
     }};
 
 

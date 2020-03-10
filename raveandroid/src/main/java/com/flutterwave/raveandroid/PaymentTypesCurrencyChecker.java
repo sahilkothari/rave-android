@@ -9,7 +9,6 @@ import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_FRANCO_MOBI
 import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_GH_MOBILE_MONEY;
 import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_MPESA;
 import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_RW_MOBILE_MONEY;
-import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_SA_BANK_ACCOUNT;
 import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_UG_MOBILE_MONEY;
 import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_UK;
 import static com.flutterwave.raveandroid.RaveConstants.PAYMENT_TYPE_USSD;
@@ -64,10 +63,6 @@ public class PaymentTypesCurrencyChecker {
                     break;
                 case PAYMENT_TYPE_UK:
                     if (acceptedCurrency.equalsIgnoreCase("GBP"))
-                        currencyCheckedPaymentTypesList.add(orderedPaymentTypesList.get(index));
-                    break;
-                case PAYMENT_TYPE_SA_BANK_ACCOUNT:
-                    if (acceptedCurrency.equalsIgnoreCase("ZAR"))
                         currencyCheckedPaymentTypesList.add(orderedPaymentTypesList.get(index));
                     break;
                 default:
