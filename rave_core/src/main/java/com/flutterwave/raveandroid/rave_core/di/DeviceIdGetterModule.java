@@ -1,9 +1,6 @@
 package com.flutterwave.raveandroid.rave_core.di;
 
 import com.flutterwave.raveandroid.rave_core.models.DeviceIdGetter;
-
-import javax.inject.Inject;
-
 import dagger.Module;
 import dagger.Provides;
 
@@ -11,7 +8,6 @@ import dagger.Provides;
 public class DeviceIdGetterModule {
     String deviceId;
 
-    @Inject
     public DeviceIdGetterModule(String deviceId) {
         this.deviceId = deviceId;
     }
